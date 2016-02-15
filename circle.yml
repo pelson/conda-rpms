@@ -1,0 +1,13 @@
+machine:
+  services:
+    - docker
+
+dependencies:
+  override:
+    - docker pull centos:6
+
+test:
+  override:
+    # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
+    - ./tests/gitenv_create_rpmbuild.sh
+    - ./tests/gitenv_build_rpms.sh

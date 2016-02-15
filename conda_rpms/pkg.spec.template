@@ -1,0 +1,59 @@
+{% set pkg_id = '{}-{}-{}'.format(pkginfo.name, pkginfo.version, pkginfo.build) %}
+
+Name:           {{ rpm_prefix }}-pkg-{{ pkg_id }}
+Version:        1
+Release:        0
+Summary:        {{ meta.about.summary }}
+
+License:        {{ pkginfo.license or 'unknown' }}
+{% if meta.about.url %}
+URL:           {{ meta.about.url }}
+{% endif %}
+Source0:        {{ pkg_id }}.tar.bz2
+BuildRoot:      %{_tmppath}/{{ pkg_id }}
+
+# We don't want yum trying to automatically figure out what this RPM provides.
+AutoReqProv: no
+
+# Turn off the brp-python-bytecompile script
+%global __os_install_post %(echo '%{__os_install_post}' | \
+                            grep -v 'brp-python-bytecompile' | \
+                            grep -v 'brp-strip' )
+
+
+# Since this is a conda distribution RPM, this package has to runtime requirements.
+
+%description
+
+This is a conda distribution for {{ pkg_id }}, which can be linked by other
+RPMs but not used directly.
+ 
+{{ meta.about.summary }}
+
+
+%prep
+# Clear up any pre-existing build-root.
+rm -rf $RPM_BUILD_ROOT/
+
+# Install the source. Because we are using a Conda package, we must specify a "top-level" source with the -c flag.
+%setup -q -c
+
+%install
+
+export CONDA_DIST_NAME={{ pkg_id }}
+export SOURCE_DIR=$(pwd)
+
+export INSTALL_PREFIX="{{ install_prefix }}/.pkgs"
+
+# The location we actually put the files.
+export BUILD_PREFIX=$RPM_BUILD_ROOT$INSTALL_PREFIX/$CONDA_DIST_NAME
+mkdir -p $BUILD_PREFIX
+cp -rf $SOURCE_DIR/* $BUILD_PREFIX/
+
+# This phase just tidies up after itself.
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+# All files in this directory:
+{{ install_prefix }}/.pkgs/{{ pkg_id }}

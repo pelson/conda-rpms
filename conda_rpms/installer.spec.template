@@ -1,0 +1,64 @@
+{% set dist = 'python-{}-{}'.format(pkg_info.version, pkg_info.build) %}
+
+Name:           {{ rpm_prefix }}-installer
+Version:        {{ pkg_info.version }}
+Release:        {{ pkg_info.build }}
+Summary:        This this the package which owns {{ install_prefix }}, and which provides a barebones python + install.py
+
+License:        BSD
+Source0:        {{ dist }}.tar.bz2
+Source1:        install.py
+BuildRoot:      %{_tmppath}/{{ rpm_prefix }}-installer
+
+
+# Turn off the brp-python-bytecompile script
+%global __os_install_post %(echo '%{__os_install_post}' | grep -v 'brp-python-bytecompile')
+
+AutoReqProv: no
+
+
+%description
+
+This {{ rpm_prefix }}-installer RPM installs the base prefix {{ install_prefix }}, as well as the tools necessary for
+environments to link against packages. A lightweight python is shipped in this package, available at
+{{ install_prefix }}/.pkgs/installer/python.
+
+%prep
+# Clear up any pre-existing build-root.
+rm -rf $RPM_BUILD_ROOT/
+
+# Install the source. Because we are using a Conda package, we must specify a "top-level" source with the -c flag.
+%setup -q -c
+
+
+%install
+export CONDA_DIST_NAME={{ dist }}
+export INSTALL_PREFIX="{{ install_prefix }}"
+
+# The location where the final distribution contents will go.
+export DIST_PREFIX=$INSTALL_PREFIX/.pkgs/installer/$CONDA_DIST_NAME
+
+# The location we actually put the files.
+export BUILD_PREFIX=${RPM_BUILD_ROOT}${DIST_PREFIX}
+
+# Prepare the .pkgs and  and .envs directories.
+mkdir -p $BUILD_PREFIX $RPM_BUILD_ROOT$INSTALL_PREFIX/.envs
+
+# Copy the contents of the conda distribution.
+cp -rf * $BUILD_PREFIX/
+
+# Put the install.py file into the "installer" pkgs directory. 
+cp %{SOURCE1} ${RPM_BUILD_ROOT}$INSTALL_PREFIX/.pkgs/installer/install.py
+
+# Make a convenient link to python in the pkg dir.
+# This is supremely useful for other packages to make use of without having to know the Python version.
+ln -sf $DIST_PREFIX/bin/python $RPM_BUILD_ROOT$INSTALL_PREFIX/.pkgs/installer/python
+
+
+# This phase just tidies up after itself.
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+# This RPM own the installation prefix.
+{{ install_prefix }}
