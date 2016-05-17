@@ -2,7 +2,7 @@
 
 Name:           {{ rpm_prefix }}-installer
 Version:        {{ pkg_info.version }}
-Release:        {{ pkg_info.build }}
+Release:        {{ pkg_info.build|int + 0}}
 Summary:        This this the package which owns {{ install_prefix }}, and which provides a barebones python + install.py
 
 License:        BSD
@@ -42,7 +42,7 @@ export DIST_PREFIX=$INSTALL_PREFIX/.pkgs/installer/$CONDA_DIST_NAME
 export BUILD_PREFIX=${RPM_BUILD_ROOT}${DIST_PREFIX}
 
 # Prepare the .pkgs and  and .envs directories.
-mkdir -p $BUILD_PREFIX $RPM_BUILD_ROOT$INSTALL_PREFIX/.envs
+mkdir -p $BUILD_PREFIX $RPM_BUILD_ROOT$INSTALL_PREFIX/.envs $RPM_BUILD_ROOT$INSTALL_PREFIX/.pkgs
 
 # Copy the contents of the conda distribution.
 cp -rf * $BUILD_PREFIX/
@@ -60,5 +60,5 @@ ln -sf $DIST_PREFIX/bin/python $RPM_BUILD_ROOT$INSTALL_PREFIX/.pkgs/installer/py
 rm -rf $RPM_BUILD_ROOT
 
 %files
-# This RPM own the installation prefix.
+# This RPM owns the installation prefix.
 {{ install_prefix }}
