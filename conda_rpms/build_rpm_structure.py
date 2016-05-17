@@ -75,7 +75,7 @@ def create_rpmbuild_for_env(pkgs, target):
         tar_name = pkg + '.tar.bz2'
         pkg_info = index.get(tar_name, None)
         if pkg_info is None:
-            raise ValueError('Distribution {} is no longer available in the channel.'.format(tar_name))
+            raise ValueError('Distribution {} is no longer available in the channel {}.'.format(tar_name, source))
         dist_name = pkg 
         if not conda.install.is_fetched(pkg_cache, dist_name):
             print('Fetching {}'.format(dist_name))
