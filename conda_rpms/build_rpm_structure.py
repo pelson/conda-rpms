@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""
+Turn the gitenv into RPM spec files which can be built at a later stage.
+
+"""
 from __future__ import print_function
 
 import datetime

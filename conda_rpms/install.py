@@ -3,6 +3,15 @@
 #
 # conda is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
+
+"""
+This is a copy of the conda/install.py script, with the additional
+"fake prefix" modification roughly proposed in
+https://github.com/conda/conda/pull/1222.
+
+"""
+
+
 ''' This module contains:
   * all low-level code for extracting, linking and unlinking packages
   * a very simple CLI
