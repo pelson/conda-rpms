@@ -26,30 +26,6 @@ from conda_gitenv.deploy import tags_by_label, tags_by_env
 import generate
 import install as conda_install
 
-def create_rpmbuild_for_tag(repo, tag_name, target):
-    print("CREATE FOR {}".format(tag_name))
-    tag = repo.tags[tag_name]
-    # Checkout the tag in a detached head form.
-    repo.head.reference = tag.commit
-    repo.head.reset(working_tree=True)
-
-    # Pull out the environment name from the form "env-<env_name>-<deployed_name>".
-    env_name = tag_name.split('-')[1]
-    deployed_name = tag_name.split('-', 2)[2]
-
-    manifest_fname = os.path.join(repo.working_dir, 'env.manifest')
-    if not os.path.exists(manifest_fname):
-        raise ValueError("The tag '{}' doesn't have a manifested environment.".format(tag_name))
-    with open(manifest_fname, 'r') as fh:
-        manifest = sorted(line.strip().split('\t') for line in fh)
-
-    create_rpmbuild_for_env(manifest, target)
-
-    pkgs = [pkg for _, pkg in manifest]
-    name = tag_name.split('-', 1)[1]
-    with open(os.path.join(target, 'SPECS', 'SciTools-taggedenv-{}.spec'.format(name)), 'w') as fh:
-        fh.write(generate.render_env(name, pkgs))
-
 
 def create_rpmbuild_for_env(pkgs, target):
     pkg_cache = os.path.join(target, 'SOURCES')
@@ -89,6 +65,27 @@ def create_rpmbuild_for_env(pkgs, target):
             spec = generate.render_dist_spec(os.path.join(pkg_cache, tar_name))
             with open(spec_path, 'w') as fh:
                 fh.write(spec)
+
+
+def create_rpmbuild_for_tag(repo, tag_name, target):
+    print("CREATE FOR {}".format(tag_name))
+    tag = repo.tags[tag_name]
+    # Checkout the tag in a detached head form.
+    repo.head.reference = tag.commit
+    repo.head.reset(working_tree=True)
+
+    manifest_fname = os.path.join(repo.working_dir, 'env.manifest')
+    if not os.path.exists(manifest_fname):
+        raise ValueError("The tag '{}' doesn't have a manifested environment.".format(tag_name))
+    with open(manifest_fname, 'r') as fh:
+        manifest = sorted(line.strip().split('\t') for line in fh)
+
+    create_rpmbuild_for_env(manifest, target)
+
+    pkgs = [pkg for _, pkg in manifest]
+    env_name, tag = tag_name.split('-')[1:]
+    with open(os.path.join(target, 'SPECS', 'SciTools-env-{}-tag-{}.spec'.format(env_name, tag)), 'w') as fh:
+        fh.write(generate.render_taggedenv(env_name, tag, pkgs))
 
 
 def create_rpmbuild_content(repo, target):
