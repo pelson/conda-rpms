@@ -3,7 +3,7 @@
 #
 # conda is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
-
+from __future__ import print_function, division, absolute_import
 """
 This is a copy of the conda/install.py script, with the additional
 "fake prefix" modification roughly proposed in
@@ -34,7 +34,6 @@ standalone, i.e. not import any other parts of `conda` (only depend on
 the standard library).
 '''
 
-from __future__ import print_function, division, absolute_import
 
 import time
 import os

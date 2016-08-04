@@ -24,7 +24,7 @@ from conda_gitenv import manifest_branch_prefix
 from conda_gitenv.deploy import tags_by_label, tags_by_env
 
 import generate
-
+import install as conda_install
 
 def create_rpmbuild_for_tag(repo, tag_name, target):
     print("CREATE FOR {}".format(tag_name))
@@ -58,10 +58,10 @@ def create_rpmbuild_for_env(pkgs, target):
         # The environment we want to deploy already exists. We should just double check that
         # there aren't already packages in there which we need to remove before we install anything
         # new.
-        linked = conda.install.linked(target)
+        linked = conda_install.linked(target)
         for pkg in linked:
             if pkg not in pkg_names:
-                conda.install.unlink(target, pkg)
+                conda_install.unlink(target, pkg)
     else:
         linked = []
 
@@ -81,7 +81,7 @@ def create_rpmbuild_for_env(pkgs, target):
         if pkg_info is None:
             raise ValueError('Distribution {} is no longer available in the channel {}.'.format(tar_name, source))
         dist_name = pkg 
-        if not conda.install.is_fetched(pkg_cache, dist_name):
+        if not conda_install.is_fetched(pkg_cache, dist_name):
             print('Fetching {}'.format(dist_name))
             conda.fetch.fetch_pkg(pkg_info, pkg_cache)
         spec_path = os.path.join(spec_dir, 'SciTools-pkg-' + pkg + '.spec')
@@ -137,7 +137,7 @@ def create_rpm_installer(target, python_spec='python'):
     pkg_info = matches[-1].info
     dist_name = '{}-{}-{}'.format(pkg_info['name'], pkg_info['version'], pkg_info['build'])
     pkg_cache = os.path.join(target, 'SOURCES') 
-    if not conda.install.is_fetched(pkg_cache, dist_name):
+    if not conda_install.is_fetched(pkg_cache, dist_name):
         print('Fetching {}'.format(dist_name))
         conda.fetch.fetch_pkg(pkg_info, pkg_cache)
 
