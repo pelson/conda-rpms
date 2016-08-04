@@ -30,49 +30,73 @@
 
 <h1>Centrally managed scientific software environments</h1>
 
+<p>
+The speed, depth and quality of open source scientific software development has grown consistently for many years.
+
+Additionally, the modular nature of languages like Python has resulted in a large number of dependencies needing to be packaged - 
+it has reached the point where no one team or individual can possibly remain abreast of the frequent changes that take place in the scientific software stack.
+
+This combination of pace rapidly makes centrally deployed scientific software stacks date quickly and often results in scientific
+lab software environments being out of date and missing new features and bug fixes.
+
+</p>
 
 <p>
-A workflow has been developed that enables deployment of multiple up-to-date centrally managed scientific software environments.
+The challenge is heightened by the dichotomy of stability and modernity for users, such that logically we arrive at the prospect
+wanting to deploy multiple software environments to the same systems.
+</p>
+
+<h2>The solution</h2>
+<p>
+This article outlines the tools and a workflow that enables deployment of multiple up-to-date centrally managed scientific software environments.
 </p>
 <img src="wheels.png" style="max-width: 33%; float: right; padding: 10px;"/>
 <p>
-Conda has emerged as the leading tool for managing individual scitentific software environments, and has been chosen as a basis for extension into the centrally managed usecase.
+Conda has emerged as the leading tool for managing individual scientific software environments, and was chosen as a basis for extension into the centrally managed use case.
 </p>
 <p>
-To separate concerns and to simplify development the deployment has been broken into three distinct phases. First, we build up a body of conda "distributions" into a channel - these are compiled packages that conda knows how to install. Next, we define and resolve our environments, and then finally deploy them.
+To separate concerns and to simplify development the deployment was broken into three distinct phases:
+<ul>
+ <li>First, we build up a body of conda "distributions" into a conda channel - these are simply compiled packages that conda knows how to install</li>
+ <li>Next, we define our environments and resolve them for their dependencies</li>
+ <li>Finally we deploy them to a number of different targets</li>
+</ul>
 </p>
 <p>
-Notice that unlike conda itself, we have separated the resolve and deploy stages.
-This allows us to resolve the environment once and subsequently deploy to a number of different targets such as RPM, tarball or directly to disk.
+Unlike conda itself we have separated the resolve and deploy stages allowing us to resolve the environment once, and then subsequently deploy to a number of different targets such as RPM, tarball or directly to disk.
 </p>
 
 
 <h3>Conda channel</h3>
 <p>
 A conda channel is simply a platform specific directory of conda distributions (.tar.bz2 files).
-Each distribution represents the metadata of a package, along with the pre-compiled files that should be installed.
-The package metadata includes details on package dependencies and therefore, when conda is used to install a distribution and its recursive dependencies, the result is a fully working installation of the package.
+A distribution represents the metadata of a single package, including details of version, dependencies, and pre-compiled files that should be installed.
+When conda is used to install a distribution from a channel, it recursively resolves the package's dependencies and places all necessary files in the desired destination.
 </p>
 
 <svg id="svg-build" width=300 height=600 style="float: right; margin-left: 1em;"></svg>
 <p>
-Generating a conda distribution is best done with conda-build. The input of conda-build is a "recipe" containing metadata about the package and its dependencies, as well as the build steps needed to compile the package. The metadata is stored as a YAML document and is therefore ideal for putting under a VCS such as git.
+Generating a conda distribution is best done with conda-build. 
+The input of conda-build is a "recipe" containing metadata about the package, its dependencies, and build steps needed to compile the package. 
+The metadata is stored as a YAML document and is therefore ideal for putting under a VCS such as git.
 </p>
 
 <p>
 In order to facilitate the sharing and canonicalisation of recipes in a single location, conda-forge has been developed.
-It takes a community oriented maintenance model to enable package developers and software packagers to come together in a single place to collaborate publically.
-Because of this, the majority of our software stack's recipes can be drawn from this public resource into a private repository of SciTools recipes. 
+It takes a community oriented maintenance model to enable package developers and software packagers to come together in a single place to collaborate publicly.
+Because of this, the majority of recipes for a lab's software stack can be drawn from this public resource into a private repository of recipes.
 </p>
 
 <p>
-As part of developing conda-forge and its predecessor conda-recipes-scitools, conda-build-all was produced to orchestrate the building of a collection of recipes against a matrix of targetted dependency versions (e.g. python 2.7 and 3.5). This same tool can be used for building our private set of recipes.
+As part of developing conda-forge and its predecessor conda-recipes-scitools, conda-build-all was produced to orchestrate the building of a collection of recipes against a matrix of targeted dependency versions (e.g. python 2.7 and 3.5).
+This same tool can be used for building a private repository of recipes.
 </p>
 
 
 <p>
 With the build of all recipes complete, we can now move the distributions (the things that were actually built) into a conda channel.
-At this point we could simply use conda to manage environments at an individual level - a valuable tool for development as well as enabling early testing of centrally managed deployments.
+At this point individuals could use vanilla conda to manage personal environments.
+Combined with site-wide conda configuration it should be stressed how valuable this option is for development purposes as well as for enabling early testing of recently built distributions.
 </p>
 
 <p>
@@ -81,20 +105,20 @@ At this point we could simply use conda to manage environments at an individual 
 <h3>Environment definition</h3>
 
 <p>
-Whilst conda can be used to manage individual environment installations, it doesn't enable centrally manged deployments in a reproducible manner.
-Instead we effectively separate the environment "resolving" step from the environment "deployment" step that are part of the normal "conda create/install" call.
+Whilst conda can be used to manage personal environments it doesn't easily enable centrally managed deployments in a reproducible manner.
+Instead we separate the environment "resolve & deploy" step that are part of the normal "conda create/install".
 </p>
 
 <svg id="svg-environment" width=300 height=600 style="float: left; margin-right: 1em; margin-bottom: 1em;"></svg>
 
 <p>
-Environment definitions themselves are best tracked through a VCS such as git. This enables environment diffing as well as giving an audit trail of what was deployed and, just as importantly, when the change occured.
+Environment definitions themselves are best tracked through a VCS such as git as it enables environment diffing, provides an audit trail of what and when changes occurred.
 </p>
 
 
 <p>
-conda-gitenv takes a git repository containing an environment specification and resolves this into a fully specified environment in a branch within the git repo.
-By making use of git tags we are able to represent a "release" of the entire environment, and are therefore able to benefit from continuous development to automatically resolve the environment on a regular basis whilst having the option of putting a human in the loop to trigger the release through a tag. 
+conda-gitenv takes a git repository containing an environment specification and resolves this into a full manifest of the environment in a distinct "manifest" branch within the repo.
+We are able to represent a "release" of a software environment by using git tags, and are therefore able to benefit from continuous development to automatically resolve the environment on a regular basis whilst having the option of putting a human in the loop to do the actual tagging.
 </p>
 
 
@@ -108,7 +132,9 @@ Decoupling of the resolve and deploy steps means that we are able to deploy the 
 <svg id="svg-rpm" width=960 height=600></svg>
 
 <p>
-One deployment mechanism that ships with conda-gitenv enables environment deployment direct to disk. This gives us feature parity with conda itself, with the additional benefit of having the environment git repository to track changes to the deployed environments. This would be an excellent choice for environment deployment to a centralised directory such as on an NFS mounted disk.
+One deployment mechanism that ships with conda-gitenv enables environment deployment direct to disk. 
+This gives us feature parity with conda itself, with the additional benefit of having the environment git repository to track changes to the deployed environments. 
+This would be an excellent choice for environment deployment to a centralised directory such as a network mounted disk.
 </p>
 
 <p>
@@ -127,8 +153,7 @@ We have developed conda-forge to enable community-wide recipe sharing and conda-
 Using any desired conda channel, conda-gitenv was developed to enable environment representation within a git repository for diffing, reviewing and tagging purposes.
 </p>
 <p>
-With a git repository containing environment definitions we can deploy the environment in any number of forms including writing directly to disk, and RPMs.
- (defaults, different destinations)
+With a git repository containing environment definitions we can deploy the environment in any desired form, including through RPM or by writing directly to disk.
 </p>
 <svg id="svg-all" width=960 height=600></svg>
 
