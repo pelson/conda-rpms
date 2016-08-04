@@ -49,13 +49,13 @@ def render_dist_spec(dist, config):
                                 install_prefix=install_prefix)
 
 
-def render_taggedenv(env_name, tag, pkgs, config):
+def render_taggedenv(env_name, tag, pkgs, config, env_spec):
     env_info = {'url': 'http://link/to/gh',
                 'name': env_name,
                 'tag': tag,
                 'summary': 'An environment in which to rejoice.',
                 'version': '1',
-                'spec': '\n'.join(['udunits2 < 2.21', 'python 2.*'])}
+                'spec': '\n'.join(env_spec)}
     rpm_prefix = config['rpm']['prefix']
     install_prefix = config['install']['prefix']
     return taggedenv_spec_tmpl.render(install_prefix=install_prefix,
