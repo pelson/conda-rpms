@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-REPO_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
+REPO_ROOT=$(cd "$(dirname "$0")/../.."; pwd;)
 
 # Test conda-gitenv approach.
 cat << EOF | docker run -i \
