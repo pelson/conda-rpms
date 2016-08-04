@@ -1,0 +1,246 @@
+<!doctype html>
+
+<meta charset="utf-8">
+<title>Scientific Software environment deployment</title>
+
+<link rel="stylesheet" href="css/style.css">
+<script src="js/d3.v3.min.js" charset="utf-8"></script>
+<script src="js/dagre-d3.js"></script>
+
+
+<style id="css">
+    text {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 14px;
+    }
+
+    .node rect {
+        stroke: #999;
+        fill: #fff;
+        stroke-width: 1.5px;
+    }
+
+    .edgePath path {
+        stroke: #333;
+        stroke-width: 1.5px;
+    }
+</style>
+
+
+<h1>Centrally managed scientific software environments</h1>
+
+
+<p>
+A workflow has been developed that enables deployment of multiple up-to-date centrally managed scientific software environments.
+</p>
+<img src="wheels.png" style="max-width: 33%; float: right; padding: 10px;"/>
+<p>
+Conda has emerged as the leading tool for managing individual scitentific software environments, and has been chosen as a basis for extension into the centrally managed usecase.
+</p>
+<p>
+To separate concerns and to simplify development the deployment has been broken into three distinct phases. First, we build up a body of conda "distributions" into a channel - these are compiled packages that conda knows how to install. Next, we define and resolve our environments, and then finally deploy them.
+</p>
+<p>
+Notice that unlike conda itself, we have separated the resolve and deploy stages.
+This allows us to resolve the environment once and subsequently deploy to a number of different targets such as RPM, tarball or directly to disk.
+</p>
+
+
+<h3>Conda channel</h3>
+<p>
+A conda channel is simply a platform specific directory of conda distributions (.tar.bz2 files).
+Each distribution represents the metadata of a package, along with the pre-compiled files that should be installed.
+The package metadata includes details on package dependencies and therefore, when conda is used to install a distribution and its recursive dependencies, the result is a fully working installation of the package.
+</p>
+
+<svg id="svg-build" width=300 height=600 style="float: right; margin-left: 1em;"></svg>
+<p>
+Generating a conda distribution is best done with conda-build. The input of conda-build is a "recipe" containing metadata about the package and its dependencies, as well as the build steps needed to compile the package. The metadata is stored as a YAML document and is therefore ideal for putting under a VCS such as git.
+</p>
+
+<p>
+In order to facilitate the sharing and canonicalisation of recipes in a single location, conda-forge has been developed.
+It takes a community oriented maintenance model to enable package developers and software packagers to come together in a single place to collaborate publically.
+Because of this, the majority of our software stack's recipes can be drawn from this public resource into a private repository of SciTools recipes. 
+</p>
+
+<p>
+As part of developing conda-forge and its predecessor conda-recipes-scitools, conda-build-all was produced to orchestrate the building of a collection of recipes against a matrix of targetted dependency versions (e.g. python 2.7 and 3.5). This same tool can be used for building our private set of recipes.
+</p>
+
+
+<p>
+With the build of all recipes complete, we can now move the distributions (the things that were actually built) into a conda channel.
+At this point we could simply use conda to manage environments at an individual level - a valuable tool for development as well as enabling early testing of centrally managed deployments.
+</p>
+
+<p>
+</p>
+
+<h3>Environment definition</h3>
+
+<p>
+Whilst conda can be used to manage individual environment installations, it doesn't enable centrally manged deployments in a reproducible manner.
+Instead we effectively separate the environment "resolving" step from the environment "deployment" step that are part of the normal "conda create/install" call.
+</p>
+
+<svg id="svg-environment" width=300 height=600 style="float: left; margin-right: 1em; margin-bottom: 1em;"></svg>
+
+<p>
+Environment definitions themselves are best tracked through a VCS such as git. This enables environment diffing as well as giving an audit trail of what was deployed and, just as importantly, when the change occured.
+</p>
+
+
+<p>
+conda-gitenv takes a git repository containing an environment specification and resolves this into a fully specified environment in a branch within the git repo.
+By making use of git tags we are able to represent a "release" of the entire environment, and are therefore able to benefit from continuous development to automatically resolve the environment on a regular basis whilst having the option of putting a human in the loop to trigger the release through a tag. 
+</p>
+
+
+<h3 style="clear: both;">Environment deployment</h3>
+
+<p>
+With the environment definition in the form of a git repo in place, we now wish to deploy it.
+Decoupling of the resolve and deploy steps means that we are able to deploy the same environment in a multitude of different ways.
+</p>
+
+<svg id="svg-rpm" width=960 height=600></svg>
+
+<p>
+One deployment mechanism that ships with conda-gitenv enables environment deployment direct to disk. This gives us feature parity with conda itself, with the additional benefit of having the environment git repository to track changes to the deployed environments. This would be an excellent choice for environment deployment to a centralised directory such as on an NFS mounted disk.
+</p>
+
+<p>
+Another deployment option is conda-rpms, which turns the environments into a collection of RPMs for installation on compatible systems (e.g. Red Hat Enterprise Linux, Fedora).
+</p>
+
+<h3>Summary</h3>
+
+<p>
+By separating the build, resolve and deploy phases we have achieved a highly customisable scientific software deployment mechanism.
+</p>
+<p>
+We have developed conda-forge to enable community-wide recipe sharing and conda-build-all to enable building of these recipes into a fully featured conda channel of distributions.
+</p>
+<p>
+Using any desired conda channel, conda-gitenv was developed to enable environment representation within a git repository for diffing, reviewing and tagging purposes.
+</p>
+<p>
+With a git repository containing environment definitions we can deploy the environment in any number of forms including writing directly to disk, and RPMs.
+ (defaults, different destinations)
+</p>
+<svg id="svg-all" width=960 height=600></svg>
+
+<p>
+</p>
+
+<script>
+
+    function build_nodes(graph) {
+        graph.setNode("conda-forge",  { label: linked_svg('conda-forge', 'https://conda-forge.github.io'), labelType: "svg" });
+        graph.setNode("recipe repo",  { label: "Repo(s) of conda recipes" });
+        graph.setNode("Channel",  { label: "Conda channel" });
+
+        graph.setEdge("conda-forge", "recipe repo", { label: "Tool to be written" });
+        graph.setEdge("recipe repo", "Channel", { label: linked_svg('conda-build-all', 'https://github.com/SciTools/conda-build-all'), labelType: "svg" });
+    } 
+
+    function env_nodes(graph) {
+        graph.setNode("Channel",  { label: "Conda channel(s)" });
+        graph.setNode("Env defn",  { label: "Env definition\n(git repo(s))" });
+        graph.setNode("Env deploy",  { label: "Env deployment", shape: 'diamond', style: "fill: #fff; stroke: #000" });
+
+        graph.setEdge("Channel", "Env defn", { label: linked_svg('conda-gitenv', 'https://github.com/SciTools/conda-gitenv'), labelType: "svg" });
+        graph.setEdge("Channel", "Env deploy");
+        graph.setEdge("Env defn", "Env deploy");
+    }
+
+    function deploy_nodes(graph) {
+        graph.setNode("Env deploy",  { label: "Env deployment", shape: 'diamond', style: "fill: #fff; stroke: #000" });
+        graph.setNode('RPM channel',  { label: "RPM channel" });
+        graph.setNode('Other',  { label: "Other (e.g. Deb, Chocolatey, \nMSI, NSIS, conda-constructor)" });
+        graph.setNode('Local deploy',  { label: "Direct to disk" });
+
+        graph.setEdge("Env deploy", "Local deploy", { label: linked_svg('conda-gitenv', 'https://github.com/SciTools/conda-gitenv'), labelType: "svg" });
+        graph.setEdge("Env deploy", 'RPM channel', { label: linked_svg('conda-rpms', 'https://github.com/pelson/conda-rpms'), labelType: "svg" })
+        graph.setEdge("Env deploy", 'Other', { label: 'Custom tools' })
+    }
+
+
+    // Create the input graph
+    var g_all = new dagreD3.graphlib.Graph()
+            .setGraph({})
+            .setDefaultEdgeLabel(function() { return {}; });
+    var g_build = new dagreD3.graphlib.Graph()
+            .setGraph({})
+            .setDefaultEdgeLabel(function() { return {}; });
+    var g_env = new dagreD3.graphlib.Graph()
+            .setGraph({})
+            .setDefaultEdgeLabel(function() { return {}; });
+    var g_deploy = new dagreD3.graphlib.Graph()
+            .setGraph({})
+            .setDefaultEdgeLabel(function() { return {}; });
+
+    function linked_svg(text, href){
+        // Create the SVG label to pass in
+        // Must create in SVG namespace
+        // http://stackoverflow.com/questions/7547117/add-a-new-line-in-svg-bug-cannot-see-the-line
+        // This mimics the same way string labels get added in Dagre-D3
+        svg_label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        tspan = document.createElementNS('http://www.w3.org/2000/svg','tspan');
+        tspan.setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:space', 'preserve');
+        tspan.setAttribute('dy', '1em');
+        tspan.setAttribute('x', '1');
+        link = document.createElementNS('http://www.w3.org/2000/svg', 'a');
+        link.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', href);
+        link.setAttribute('target', '_blank');
+        link.textContent = text;
+        tspan.appendChild(link);
+        svg_label.appendChild(tspan);
+        return svg_label
+    }
+
+    // Create the renderer
+    var render = new dagreD3.render();
+
+
+    function render_graph(graph, svg, svgGroup) {
+       graph.nodes().forEach(function(v) {
+            var node = graph.node(v);
+            node.rx = node.ry = 5;
+        });
+
+        // Run the renderer. This is what draws the final graph.
+        render(svgGroup, graph);
+
+        // Center the graph
+        var xCenterOffset = (svg.attr("width") - graph.graph().width) / 2;
+        svgGroup.attr("transform", "translate(" + xCenterOffset + ", 20)");
+        svg.attr("height", graph.graph().height + 40);
+    };
+
+    var svg = d3.select("#svg-all"),
+        svgGroup = svg.append("g");
+    build_nodes(g_all);
+    env_nodes(g_all);
+    deploy_nodes(g_all);
+    render_graph(g_all, svg, svgGroup);
+
+    var svg = d3.select("#svg-build"),
+        svgGroup = svg.append("g");
+    build_nodes(g_build);
+    render_graph(g_build, svg, svgGroup);
+
+    var svg = d3.select("#svg-environment"),
+        svgGroup = svg.append("g");
+    env_nodes(g_env);
+    render_graph(g_env, svg, svgGroup);
+
+    var svg = d3.select("#svg-rpm"),
+        svgGroup = svg.append("g");
+    deploy_nodes(g_deploy);
+    render_graph(g_deploy, svg, svgGroup);
+
+</script>
+
