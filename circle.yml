@@ -9,5 +9,5 @@ dependencies:
 test:
   override:
     # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
-    - ./tests/gitenv_create_rpmbuild.sh
-    - ./tests/gitenv_build_rpms.sh
+    - ./tests/integration/gitenv_create_rpmbuild.sh
+    - ./tests/integration/gitenv_build_rpms.sh
