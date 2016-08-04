@@ -1,6 +1,6 @@
-{% set env_dir = '{}/environments/{}'.format(install_prefix, env.name) %}
+{% set env_dir = '{}/environments/{}/{}'.format(install_prefix, env.name, env.tag) %}
 
-Name:           {{ rpm_prefix }}-env-{{ env.name }}
+Name:           {{ rpm_prefix }}-env-{{ env.name }}-tag-{{ env.tag }}
 Version:        {{ env.version }}
 Release:        0
 Summary:        {{ env.summary }} 
@@ -9,7 +9,7 @@ License:        BSD 3
 {% if env.url -%}
 URL:            {{ env.url }}
 {%- endif %}
-BuildRoot:      %{_tmppath}/env-{{env.name}}-{{env.version}}
+BuildRoot:      %{_tmppath}/env-{{ env.name }}-tag-{{ env.tag }}-{{env.version}}
 
 Requires: {{ rpm_prefix}}-installer
 {% for pkg in pkgs -%}
@@ -18,7 +18,7 @@ Requires: {{ rpm_prefix }}-pkg-{{ pkg }}
 
 %description
 
-This is the {{ env.name }} {{rpm_prefix}} environment, described as:
+This is the {{ env.name }}-{{env.tag}} {{rpm_prefix}} environment, described as:
 
     {{ env.summary|indent }}
 

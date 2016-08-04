@@ -8,7 +8,7 @@ loader = jinja2.FileSystemLoader(template_dir)
 env = jinja2.Environment(loader=loader)
 
 pkg_spec_tmpl = env.get_template('pkg.spec.template')
-env_spec_tmpl = env.get_template('env.spec.template')
+taggedenv_spec_tmpl = env.get_template('taggedenv.spec.template')
 installer_spec_tmpl = env.get_template('installer.spec.template')
 
 import tarfile
@@ -42,13 +42,14 @@ def render_dist_spec(dist):
     return pkg_spec_tmpl.render(pkginfo=pkginfo, meta=meta, rpm_prefix='SciTools', install_prefix='/opt/scitools')
 
 
-def render_env(name, pkgs):
+def render_taggedenv(env_name, tag, pkgs):
     env_info = {'url': 'http://link/to/gh',
-                'name': name,
+                'name': env_name,
+                'tag': tag,
                 'summary': 'An environment in which to rejoice.',
                 'version': '1',
                 'spec': '\n'.join(['udunits2 < 2.21', 'python 2.*'])}
-    return env_spec_tmpl.render(install_prefix='/opt/scitools', pkgs=pkgs, rpm_prefix='SciTools', env=env_info)
+    return taggedenv_spec_tmpl.render(install_prefix='/opt/scitools', pkgs=pkgs, rpm_prefix='SciTools', env=env_info)
 
 
 def render_installer(pkg_info):
