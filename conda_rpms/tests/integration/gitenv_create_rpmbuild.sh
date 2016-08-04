@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
 
-REPO_ROOT=$(cd "$(dirname "$0")/../.."; pwd;)
+
+REPO_ROOT=$(cd "$(dirname ${0})/../../.."; pwd;)
 
 # Test conda-gitenv approach.
 cat << EOF | docker run -i \
                         -v ${REPO_ROOT}:/repo \
                         -a stdin -a stdout -a stderr \
                         centos:6 \
-                        bash || exit $?
+                        bash || exit ${?}
 
 yum install -y rpm-build createrepo wget which tar git
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh --no-verbose
 bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && rm -f Miniconda*.sh
-export PATH=/opt/conda/bin:$PATH
+export PATH=/opt/conda/bin:${PATH}
 
 export PYTHONPATH=/repo/
 
