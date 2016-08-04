@@ -29,7 +29,7 @@ gpgcheck=0
 
 YUMREPO_EOF
 
-yum install -y SciTools-env-*
+yum install -y TestMyBuild-env-*
 
 # TODO: Make some assertions!?
 
