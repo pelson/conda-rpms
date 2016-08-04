@@ -8,26 +8,72 @@ from __future__ import print_function
 import datetime
 from glob import glob
 import os
-import time
 import shutil
+import time
 
-from git import Repo
 import conda.api
 import conda.fetch
 from conda.resolve import Resolve, MatchSpec
-
-from conda_gitenv.resolve import tempdir, create_tracking_branches
-
-from conda_gitenv.lock import Locked
 from conda_gitenv import manifest_branch_prefix
-
 from conda_gitenv.deploy import tags_by_label, tags_by_env
+from conda_gitenv.lock import Locked
+from conda_gitenv.resolve import tempdir, create_tracking_branches
+from git import Repo
+import yaml
 
 import generate
 import install as conda_install
 
 
-def create_rpmbuild_for_env(pkgs, target):
+class Config(dict):
+    def __init__(self, fname, store=None, key=None):
+        self.fname = os.path.abspath(os.path.expanduser(fname))
+        self._store = store
+        if store is None:
+            self._load()
+        self._key = []
+        if key is not None:
+            self._key = key
+
+    def _load(self):
+        if not os.path.exists(self.fname):
+            emsg = 'The configuration file {!r} does not exist.'
+            raise ValueError(emsg.format(os.path.basename(self.fname)))
+        with open(self.fname, 'r') as fh:
+            try:
+                self._store = yaml.safe_load(fh)
+            except yaml.YAMLError as e:
+                emsg = 'YAML error in configuration file {!r}: {}'
+                line, column = e.problem_mark.line, e.problem_mark.column
+                ymsg = '{}, line {}, column {}.'.format(e.context,
+                                                        line+1,
+                                                        column+1)
+                raise ValueError(emsg.format(os.path.basename(self.fname),
+                                             ymsg))
+
+    def __getitem__(self, key):
+        try:
+            result = self._store[key]
+        except KeyError:
+            emsg = 'The YAML file {!r} does not contain key [{}].'
+            full_key = ']['.join(self._key + [key])
+            raise ValueError(emsg.format(os.path.basename(self.fname), full_key))
+        if isinstance(result, dict):
+            result = Config(self.fname, result, self._key + [key])
+        return result
+
+    def __iter__(self):
+        return iter(self._store)
+
+    def __len__(self):
+        return len(self._store)
+
+    def __repr__(self):
+        return repr(self._store)
+
+
+def create_rpmbuild_for_env(pkgs, target, config):
+    rpm_prefix = config['rpm']['prefix']
     pkg_cache = os.path.join(target, 'SOURCES')
     pkg_names = set(pkg for _, pkg in pkgs)
     if os.path.exists(target):
@@ -60,14 +106,15 @@ def create_rpmbuild_for_env(pkgs, target):
         if not conda_install.is_fetched(pkg_cache, dist_name):
             print('Fetching {}'.format(dist_name))
             conda.fetch.fetch_pkg(pkg_info, pkg_cache)
-        spec_path = os.path.join(spec_dir, 'SciTools-pkg-' + pkg + '.spec')
+        spec_path = os.path.join(spec_dir, '{}-pkg-{}.spec'.format(rpm_prefix, pkg))
         if not os.path.exists(spec_path):
-            spec = generate.render_dist_spec(os.path.join(pkg_cache, tar_name))
+            spec = generate.render_dist_spec(os.path.join(pkg_cache, tar_name), config)
             with open(spec_path, 'w') as fh:
                 fh.write(spec)
 
 
-def create_rpmbuild_for_tag(repo, tag_name, target):
+def create_rpmbuild_for_tag(repo, tag_name, target, config):
+    rpm_prefix = config['rpm']['prefix']
     print("CREATE FOR {}".format(tag_name))
     tag = repo.tags[tag_name]
     # Checkout the tag in a detached head form.
@@ -80,15 +127,15 @@ def create_rpmbuild_for_tag(repo, tag_name, target):
     with open(manifest_fname, 'r') as fh:
         manifest = sorted(line.strip().split('\t') for line in fh)
 
-    create_rpmbuild_for_env(manifest, target)
+    create_rpmbuild_for_env(manifest, target, config)
 
     pkgs = [pkg for _, pkg in manifest]
     env_name, tag = tag_name.split('-')[1:]
-    with open(os.path.join(target, 'SPECS', 'SciTools-env-{}-tag-{}.spec'.format(env_name, tag)), 'w') as fh:
-        fh.write(generate.render_taggedenv(env_name, tag, pkgs))
+    with open(os.path.join(target, 'SPECS', '{}-env-{}-tag-{}.spec'.format(rpm_prefix, env_name, tag)), 'w') as fh:
+        fh.write(generate.render_taggedenv(env_name, tag, pkgs, config))
 
 
-def create_rpmbuild_content(repo, target):
+def create_rpmbuild_content(repo, target, config):
     env_tags = tags_by_env(repo)
     for branch in repo.branches:
         # We only want environment branches, not manifest branches.
@@ -123,10 +170,11 @@ def create_rpmbuild_content(repo, target):
                 # If we wanted RPMS for each label, enable this.
 #                create_rpmbuild_for_label(env, tag, target)
             for tag in tags:
-                create_rpmbuild_for_tag(repo, tag, target)
+                create_rpmbuild_for_tag(repo, tag, target, config)
 
 
-def create_rpm_installer(target, python_spec='python'):
+def create_rpm_installer(target, config, python_spec='python'):
+    rpm_prefix = config['rpm']['prefix']
     index = conda.api.get_index()
     matches = Resolve(index).get_pkgs(MatchSpec(python_spec))
     if not matches:
@@ -143,24 +191,27 @@ def create_rpm_installer(target, python_spec='python'):
 
     shutil.copyfile(installer_source, installer_target)
 
-    specfile = os.path.join(target, 'SPECS', 'SciTools-installer.spec')
+    specfile = os.path.join(target, 'SPECS', '{}-installer.spec'.format(rpm_prefix))
     with open(specfile, 'w') as fh:
-        fh.write(generate.render_installer(pkg_info))
+        fh.write(generate.render_installer(pkg_info, config))
 
 
 def configure_parser(parser):
     parser.add_argument('repo_uri', help='Repo to deploy.')
     parser.add_argument('target', help='Location to put the RPMBUILD content.')
+    parser.add_argument('--config', '-c', type=str, default='config.yaml',
+                        help='YAML configuration filename.')
     parser.set_defaults(function=handle_args)
     return parser
 
 
 def handle_args(args):
+    config = Config(args.config)
     with tempdir() as repo_directory:
         repo = Repo.clone_from(args.repo_uri, repo_directory)
         create_tracking_branches(repo)
-        create_rpmbuild_content(repo, args.target)
-        create_rpm_installer(args.target)
+        create_rpmbuild_content(repo, args.target, config)
+        create_rpm_installer(args.target, config)
 
 
 def main():

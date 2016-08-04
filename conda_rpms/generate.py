@@ -15,7 +15,8 @@ import tarfile
 import json
 import yaml
 
-def render_dist_spec(dist):
+
+def render_dist_spec(dist, config):
     with tarfile.open(dist, 'r:bz2') as tar:
         m = tar.getmember('info/index.json')
         fh = tar.extractfile(m)
@@ -39,21 +40,36 @@ def render_dist_spec(dist):
     meta_about.setdefault('license', pkginfo.get('license'))
     meta_about.setdefault('summary', 'The {} package'.format(pkginfo['name']))
 
-    return pkg_spec_tmpl.render(pkginfo=pkginfo, meta=meta, rpm_prefix='SciTools', install_prefix='/opt/scitools')
+    rpm_prefix = config['rpm']['prefix']
+    install_prefix = config['install']['prefix']
+
+    return pkg_spec_tmpl.render(pkginfo=pkginfo,
+                                meta=meta,
+                                rpm_prefix=rpm_prefix,
+                                install_prefix=install_prefix)
 
 
-def render_taggedenv(env_name, tag, pkgs):
+def render_taggedenv(env_name, tag, pkgs, config):
     env_info = {'url': 'http://link/to/gh',
                 'name': env_name,
                 'tag': tag,
                 'summary': 'An environment in which to rejoice.',
                 'version': '1',
                 'spec': '\n'.join(['udunits2 < 2.21', 'python 2.*'])}
-    return taggedenv_spec_tmpl.render(install_prefix='/opt/scitools', pkgs=pkgs, rpm_prefix='SciTools', env=env_info)
+    rpm_prefix = config['rpm']['prefix']
+    install_prefix = config['install']['prefix']
+    return taggedenv_spec_tmpl.render(install_prefix=install_prefix,
+                                      pkgs=pkgs,
+                                      rpm_prefix=rpm_prefix,
+                                      env=env_info)
 
 
-def render_installer(pkg_info):
-    return installer_spec_tmpl.render(install_prefix='/opt/scitools', rpm_prefix='SciTools', pkg_info=pkg_info)
+def render_installer(pkg_info, config):
+    rpm_prefix = config['rpm']['prefix']
+    install_prefix = config['install']['prefix']
+    return installer_spec_tmpl.render(install_prefix=install_prefix,
+                                      rpm_prefix=rpm_prefix,
+                                      pkg_info=pkg_info)
 
 
 if __name__ == '__main__':

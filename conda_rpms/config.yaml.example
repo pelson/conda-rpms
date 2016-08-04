@@ -1,0 +1,5 @@
+rpm:
+    prefix: 'SciTools'
+
+install:
+    prefix: '/opt/scitools'

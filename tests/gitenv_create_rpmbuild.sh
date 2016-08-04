@@ -48,7 +48,16 @@ git commit -m "Added the default environment."
 /opt/conda/bin/conda-gitenv resolve /repo/tests/output/gitenv
 /opt/conda/bin/conda-gitenv autotag /repo/tests/output/gitenv
 
-python /repo/conda_rpms/build_rpm_structure.py /repo/tests/output/gitenv /repo/tests/output/gitenv_rpmbuild
+cat <<CONFIG_EOF > /repo/conda_rpms/config.yaml
+rpm:
+    prefix: 'TestMyBuild'
+
+install:
+    prefix: '/opt/testmybuild'
+
+CONFIG_EOF
+
+python /repo/conda_rpms/build_rpm_structure.py /repo/tests/output/gitenv /repo/tests/output/gitenv_rpmbuild -c /repo/conda_rpms/config.yaml
 
 EOF
 
