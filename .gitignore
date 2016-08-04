@@ -1,1 +1,27 @@
-*.pyc
+*.py[co]
+
+# Packages
+*.egg
+*.eggs
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+
+# Installer logs
+pip-log.txt
+
+#shared objects
+*.so
+
+# Created by editors
+*~
+\#*
+\.\#*
+*.swp
