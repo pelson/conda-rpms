@@ -57,7 +57,8 @@ class Config(dict):
         except KeyError:
             emsg = 'The YAML file {!r} does not contain key [{}].'
             full_key = ']['.join(self._key + [key])
-            raise ValueError(emsg.format(os.path.basename(self.fname), full_key))
+            raise ValueError(emsg.format(os.path.basename(self.fname),
+                                         full_key))
         if isinstance(result, dict):
             result = Config(self.fname, result, self._key + [key])
         return result
@@ -77,9 +78,9 @@ def create_rpmbuild_for_env(pkgs, target, config):
     pkg_cache = os.path.join(target, 'SOURCES')
     pkg_names = set(pkg for _, pkg in pkgs)
     if os.path.exists(target):
-        # The environment we want to deploy already exists. We should just double check that
-        # there aren't already packages in there which we need to remove before we install anything
-        # new.
+        # The environment we want to deploy already exists. We should
+        # just double check that there aren't already packages in there which
+        # we need to remove before we install anything new.
         linked = conda_install.linked(target)
         for pkg in linked:
             if pkg not in pkg_names:
@@ -89,7 +90,8 @@ def create_rpmbuild_for_env(pkgs, target, config):
 
     if set(linked) == pkg_names:
         # We don't need to re-link everything - it is already as expected.
-        # The downside is that we are not verifying that each package is installed correctly.
+        # The downside is that we are not verifying that each package is
+        # installed correctly.
         return
 
     spec_dir = os.path.join(target, 'SPECS')
@@ -101,14 +103,17 @@ def create_rpmbuild_for_env(pkgs, target, config):
         tar_name = pkg + '.tar.bz2'
         pkg_info = index.get(tar_name, None)
         if pkg_info is None:
-            raise ValueError('Distribution {} is no longer available in the channel {}.'.format(tar_name, source))
+            raise ValueError('Distribution {} is no longer available '
+                             'in the channel {}.'.format(tar_name, source))
         dist_name = pkg 
         if not conda_install.is_fetched(pkg_cache, dist_name):
             print('Fetching {}'.format(dist_name))
             conda.fetch.fetch_pkg(pkg_info, pkg_cache)
-        spec_path = os.path.join(spec_dir, '{}-pkg-{}.spec'.format(rpm_prefix, pkg))
+        spec_path = os.path.join(spec_dir, '{}-pkg-{}.spec'.format(rpm_prefix,
+                                                                   pkg))
         if not os.path.exists(spec_path):
-            spec = generate.render_dist_spec(os.path.join(pkg_cache, tar_name), config)
+            spec = generate.render_dist_spec(os.path.join(pkg_cache,
+                                                          tar_name), config)
             with open(spec_path, 'w') as fh:
                 fh.write(spec)
 
@@ -123,7 +128,8 @@ def create_rpmbuild_for_tag(repo, tag_name, target, config):
 
     manifest_fname = os.path.join(repo.working_dir, 'env.manifest')
     if not os.path.exists(manifest_fname):
-        raise ValueError("The tag '{}' doesn't have a manifested environment.".format(tag_name))
+        raise ValueError("The tag '{}' doesn't have a manifested "
+                         "environment.".format(tag_name))
     with open(manifest_fname, 'r') as fh:
         manifest = sorted(line.strip().split('\t') for line in fh)
 
@@ -137,7 +143,8 @@ def create_rpmbuild_for_tag(repo, tag_name, target, config):
 
     pkgs = [pkg for _, pkg in manifest]
     env_name, tag = tag_name.split('-')[1:]
-    with open(os.path.join(target, 'SPECS', '{}-env-{}-tag-{}.spec'.format(rpm_prefix, env_name, tag)), 'w') as fh:
+    fname = '{}-env-{}-tag-{}.spec'.format(rpm_prefix, env_name, tag)
+    with open(os.path.join(target, 'SPECS', fname), 'w') as fh:
         fh.write(generate.render_taggedenv(env_name, tag, pkgs, config, env_spec))
 
 
@@ -151,10 +158,11 @@ def create_rpmbuild_content(repo, target, config):
             # skip this environment.
             if manifest_branch_name not in repo.branches:
                 continue
-            manifest_branch = repo.branches[manifest_branch_name]
             branch.checkout()
-            labelled_tags = tags_by_label(os.path.join(repo.working_dir, 'labels'))
-            # We want to deploy all tags which have a label, as well as the latest tag.
+            labelled_tags = tags_by_label(os.path.join(repo.working_dir,
+                                                       'labels'))
+            # We want to deploy all tags which have a label, as well as the
+            # latest tag.
             if env_tags.get(branch.name):
                 latest_tag = max(env_tags[branch.name],
                                  key=lambda t: t.commit.committed_date)
@@ -163,21 +171,12 @@ def create_rpmbuild_content(repo, target, config):
             #--------------- New for this ---------
 
             # Keep track of the labels which have tags - its those we want.
-            tags = []
-            envs = []
             for label, tag in labelled_tags.items():
-                deployed_name = tag.split('-', 2)[2]
-                label_target = deployed_name
-                label_location = os.path.join(target, branch.name, label)
-
-                env = '{}-{}'.format(branch.name, label)
-                tags.append(tag)
-                envs.append(env)
-                # If we wanted RPMS for each label, enable this.
-#                create_rpmbuild_for_label(env, tag, target)
-            for tag in tags:
                 create_rpmbuild_for_tag(repo, tag, target, config)
-
+                fname = 'SciTools-env-{}-label-{}.spec'.format(branch.name, label)
+                with open(os.path.join(target, 'SPECS', fname), 'w') as fh:
+                    fh.write(generate.render_env(branch.name, label,
+                                                 repo, config, tag))
 
 def create_rpm_installer(target, config, python_spec='python'):
     rpm_prefix = config['rpm']['prefix']
@@ -186,7 +185,8 @@ def create_rpm_installer(target, config, python_spec='python'):
     if not matches:
         raise RuntimeError('No python found in the channels.')
     pkg_info = matches[-1].info
-    dist_name = '{}-{}-{}'.format(pkg_info['name'], pkg_info['version'], pkg_info['build'])
+    dist_name = '{}-{}-{}'.format(pkg_info['name'], pkg_info['version'],
+                                  pkg_info['build'])
     pkg_cache = os.path.join(target, 'SOURCES') 
     if not conda_install.is_fetched(pkg_cache, dist_name):
         print('Fetching {}'.format(dist_name))
@@ -197,7 +197,8 @@ def create_rpm_installer(target, config, python_spec='python'):
 
     shutil.copyfile(installer_source, installer_target)
 
-    specfile = os.path.join(target, 'SPECS', '{}-installer.spec'.format(rpm_prefix))
+    specfile = os.path.join(target, 'SPECS',
+                            '{}-installer.spec'.format(rpm_prefix))
     with open(specfile, 'w') as fh:
         fh.write(generate.render_installer(pkg_info, config))
 
@@ -222,8 +223,8 @@ def handle_args(args):
 
 def main():
     import argparse
-
-    parser = argparse.ArgumentParser(description='Deploy the tracked environments.')
+    parser = argparse.ArgumentParser(description='Deploy the tracked '
+                                                 'environments.')
     configure_parser(parser)
     args = parser.parse_args()
     return args.function(args)

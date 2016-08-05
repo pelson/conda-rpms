@@ -8,6 +8,7 @@ loader = jinja2.FileSystemLoader(template_dir)
 env = jinja2.Environment(loader=loader)
 
 pkg_spec_tmpl = env.get_template('pkg.spec.template')
+env_spec_tmpl = env.get_template('env.spec.template')
 taggedenv_spec_tmpl = env.get_template('taggedenv.spec.template')
 installer_spec_tmpl = env.get_template('installer.spec.template')
 
@@ -48,6 +49,18 @@ def render_dist_spec(dist, config):
                                 rpm_prefix=rpm_prefix,
                                 install_prefix=install_prefix)
 
+def render_env(branch_name, label, repo, config, tag):
+    env_info = {'url': 'http://link/to/gh',
+                'name': branch_name,
+		'label' : label,
+                'summary': 'A SciTools environment.',
+                'version': len(list(repo.iter_commits())),}
+    install_prefix = config['install']['prefix']
+    rpm_prefix = config['rpm']['prefix']
+    return env_spec_tmpl.render(install_prefix=install_prefix,
+                                rpm_prefix=rpm_prefix, env=env_info,
+                                labelled_tag=tag.split('-')[-1])
+
 
 def render_taggedenv(env_name, tag, pkgs, config, env_spec):
     env_info = {'url': 'http://link/to/gh',
@@ -80,5 +93,5 @@ if __name__ == '__main__':
     #print(render_dist_spec(args.distribution))
     #print(render_env('my_second_env', pkgs=['udunits2-2.2.20-0']))
     print(args)
-    print(render_installer({'name': 'python', 'version': '2.11.1', 'build': '0'}))
-
+    print(render_installer({'name': 'python', 'version': '2.11.1',
+                            'build': '0'}))
