@@ -18,7 +18,7 @@ from conda_gitenv import manifest_branch_prefix
 from conda_gitenv.deploy import tags_by_label, tags_by_env
 from conda_gitenv.lock import Locked
 from conda_gitenv.resolve import tempdir, create_tracking_branches
-from git import Repo
+from git import Repo, Commit
 import yaml
 
 import generate
@@ -170,13 +170,17 @@ def create_rpmbuild_content(repo, target, config):
 
             #--------------- New for this ---------
 
+            # Get number of commits to determine the version of the env rpm.
+            commit_num = len(list(Commit.iter_items(repo, branch.commit))) 
+
             # Keep track of the labels which have tags - its those we want.
             for label, tag in labelled_tags.items():
                 create_rpmbuild_for_tag(repo, tag, target, config)
                 fname = 'SciTools-env-{}-label-{}.spec'.format(branch.name, label)
                 with open(os.path.join(target, 'SPECS', fname), 'w') as fh:
                     fh.write(generate.render_env(branch.name, label,
-                                                 repo, config, tag))
+                                                 repo, config, tag, commit_num))
+
 
 def create_rpm_installer(target, config, python_spec='python'):
     rpm_prefix = config['rpm']['prefix']
