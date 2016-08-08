@@ -99,7 +99,7 @@ def create_rpmbuild_for_env(pkgs, target, config):
         os.makedirs(spec_dir)
 
     for source, pkg in pkgs:
-        index = conda.fetch.fetch_index([source], use_cache=True)
+        index = conda.fetch.fetch_index([source], use_cache=False)
         tar_name = pkg + '.tar.bz2'
         pkg_info = index.get(tar_name, None)
         if pkg_info is None:
