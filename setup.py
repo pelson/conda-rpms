@@ -60,6 +60,7 @@ setup_args = dict(
     description      = 'conda-rpms',
     long_description = extract_description(),
     platforms        = ['Linux', 'Mac OS X', 'Windows'],
+    include_package_data=True,
     license          = 'BSD 3-clause',
     packages         = extract_packages(),
     classifiers      = [
