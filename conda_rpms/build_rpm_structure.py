@@ -22,8 +22,8 @@ from git import Repo, Commit
 import yaml
 
 import logging
-import generate
-import install as conda_install
+import conda_rpms.generate as generate
+import conda_rpms.install as conda_install
 
 
 class Config(dict):
