@@ -21,6 +21,7 @@ from conda_gitenv.resolve import tempdir, create_tracking_branches
 from git import Repo, Commit
 import yaml
 
+import logging
 import generate
 import install as conda_install
 
@@ -138,9 +139,7 @@ def create_rpmbuild_for_tag(repo, tag_name, target, config):
         raise ValueError("The tag '{}' doesn't have an environment specification.".format(tag_name))
     with open(spec_fname, 'r') as fh:
         env_spec = yaml.safe_load(fh).get('env', [])
-
     create_rpmbuild_for_env(manifest, target, config)
-
     pkgs = [pkg for _, pkg in manifest]
     env_name, tag = tag_name.split('-')[1:]
     fname = '{}-env-{}-tag-{}.spec'.format(rpm_prefix, env_name, tag)
@@ -217,6 +216,13 @@ def configure_parser(parser):
 
 
 def handle_args(args):
+    # To reduce the noise coming from conda/conda-build we set
+    # all loggers to WARN level.
+    logging.getLogger('').setLevel(logging.WARNING)
+    for logger_name in logging.Logger.manager.loggerDict.keys():
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.WARNING)
+
     config = Config(args.config)
     with tempdir() as repo_directory:
         repo = Repo.clone_from(args.repo_uri, repo_directory)
