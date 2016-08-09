@@ -21,7 +21,6 @@ def extract_packages():
     return packages
 
 
-# XXX: Replace with versioneer.
 def extract_version():
     version = None
     fname = os.path.join(DIR, NAME, '__init__.py')
