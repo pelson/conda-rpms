@@ -2,7 +2,7 @@ import os
 import jinja2
 
 
-template_dir = os.path.dirname(__file__)
+template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 loader = jinja2.FileSystemLoader(template_dir)
 
 env = jinja2.Environment(loader=loader)
