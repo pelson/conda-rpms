@@ -187,7 +187,8 @@ def create_rpm_installer(target, config, python_spec='python'):
     matches = Resolve(index).get_pkgs(MatchSpec(python_spec))
     if not matches:
         raise RuntimeError('No python found in the channels.')
-    pkg_info = matches[-1].info
+    # Pick the latest Python match.
+    pkg_info = sorted(matches)[-1].info
     dist_name = '{}-{}-{}'.format(pkg_info['name'], pkg_info['version'],
                                   pkg_info['build'])
     pkg_cache = os.path.join(target, 'SOURCES') 
