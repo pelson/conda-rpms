@@ -98,11 +98,11 @@ def create_rpmbuild_for_env(pkgs, target, config):
     spec_dir = os.path.join(target, 'SPECS')
     if not os.path.exists(spec_dir):
         os.makedirs(spec_dir)
-
     for source, pkg in pkgs:
         index = conda.fetch.fetch_index([source], use_cache=False)
+        pkg_index = {pkg_info['fn']: pkg_info for pkg_info in index.values()}
         tar_name = pkg + '.tar.bz2'
-        pkg_info = index.get(tar_name, None)
+        pkg_info = pkg_index.get(tar_name, None)
         if pkg_info is None:
             raise ValueError('Distribution {} is no longer available '
                              'in the channel {}.'.format(tar_name, source))
