@@ -28,7 +28,7 @@ Package RPM
 
 RPM name format: ``<RPM prefix>-pkg-<pkg name>-<pkg version>-<pkg build id>``
 
-A package RPM represents the conda "package cache" (the thing that normally lives in `<root prefix>/.pkgs/<pkg name>-<pkg version>-<pkg build id>`).
+A package RPM represents the conda "package cache" (the thing that normally lives in `<conda root prefix>/pkgs/<pkg name>-<pkg version>-<pkg build id>`).
 A package RPM *does not* express its dependencies and can not be usefully installed as a standalone entity.
 
 Tagged environment RPM
