@@ -148,7 +148,7 @@ def create_rpmbuild_for_tag(repo, tag_name, target, config):
 
 
 def create_rpmbuild_content(repo, target, config):
-    env_tags = tags_by_env(repo)
+    rpm_prefix = config['rpm']['prefix']
     for branch in repo.branches:
         # We only want environment branches, not manifest branches.
         if not branch.name.startswith(manifest_branch_prefix):
@@ -160,14 +160,6 @@ def create_rpmbuild_content(repo, target, config):
             branch.checkout()
             labelled_tags = tags_by_label(os.path.join(repo.working_dir,
                                                        'labels'))
-            # We want to deploy all tags which have a label, as well as the
-            # latest tag.
-            if env_tags.get(branch.name):
-                latest_tag = max(env_tags[branch.name],
-                                 key=lambda t: t.commit.committed_date)
-                labelled_tags['latest'] = latest_tag.name
-
-            #--------------- New for this ---------
 
             # Get number of commits to determine the version of the env rpm.
             commit_num = len(list(Commit.iter_items(repo, branch.commit))) 
@@ -175,7 +167,7 @@ def create_rpmbuild_content(repo, target, config):
             # Keep track of the labels which have tags - its those we want.
             for label, tag in labelled_tags.items():
                 create_rpmbuild_for_tag(repo, tag, target, config)
-                fname = 'SciTools-env-{}-label-{}.spec'.format(branch.name, label)
+                fname = '{}-env-{}-label-{}.spec'.format(rpm_prefix, branch.name, label)
                 with open(os.path.join(target, 'SPECS', fname), 'w') as fh:
                     fh.write(generate.render_env(branch.name, label,
                                                  repo, config, tag, commit_num))
@@ -201,8 +193,11 @@ def create_rpm_installer(target, config, python_spec='python'):
 
     shutil.copyfile(installer_source, installer_target)
 
-    specfile = os.path.join(target, 'SPECS',
-                            '{}-installer.spec'.format(rpm_prefix))
+    spec_dir = os.path.join(target, 'SPECS')
+    if not os.path.exists(spec_dir):
+        os.makedirs(spec_dir)
+
+    specfile = os.path.join(spec_dir, '{}-installer.spec'.format(rpm_prefix))
     with open(specfile, 'w') as fh:
         fh.write(generate.render_installer(pkg_info, config))
 

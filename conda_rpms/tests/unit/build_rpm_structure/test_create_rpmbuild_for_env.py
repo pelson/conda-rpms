@@ -41,8 +41,8 @@ class Test(tests.CommonTest):
             create_rpmbuild_for_env(self.pkgs, target, self.config)
             spec_dir = os.path.join(target, 'SPECS')
             self.assertTrue(os.path.isdir(spec_dir))
-            expected = [call(['url1'], use_cache=True),
-                        call(['url2'], use_cache=True)]
+            expected = [call(['url1'], use_cache=False),
+                        call(['url2'], use_cache=False)]
             self.assertEqual(mindex.call_args_list, expected)
             srcs_dir = os.path.join(target, 'SOURCES')
             expected = [call(srcs_dir, 'pkg1'),
@@ -71,8 +71,8 @@ class Test(tests.CommonTest):
             create_rpmbuild_for_env(self.pkgs, target, self.config)
             spec_dir = os.path.join(target, 'SPECS')
             self.assertTrue(os.path.isdir(spec_dir))
-            expected = [call(['url1'], use_cache=True),
-                        call(['url2'], use_cache=True)]
+            expected = [call(['url1'], use_cache=False),
+                        call(['url2'], use_cache=False)]
             self.assertEqual(mindex.call_args_list, expected)
             srcs_dir = os.path.join(target, 'SOURCES')
             expected = [call(srcs_dir, 'pkg1'),
