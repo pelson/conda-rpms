@@ -141,7 +141,7 @@ def create_rpmbuild_for_tag(repo, tag_name, target, config):
         env_spec = yaml.safe_load(fh).get('env', [])
     create_rpmbuild_for_env(manifest, target, config)
     pkgs = [pkg for _, pkg in manifest]
-    env_name, tag = tag_name.split('-')[1:]
+    env_name, tag = tag_name.split('-', 2)[1:]
     fname = '{}-env-{}-tag-{}.spec'.format(rpm_prefix, env_name, tag)
     with open(os.path.join(target, 'SPECS', fname), 'w') as fh:
         fh.write(generate.render_taggedenv(env_name, tag, pkgs, config, env_spec))
