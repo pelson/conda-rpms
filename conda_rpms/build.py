@@ -14,11 +14,11 @@ def name_version_release(spec_fh):
     """
     content = {}
     for line in spec_fh:
-        if line.startswith('Name:'):
+        if line.startswith('Name:') and 'name' not in content:
             content['name'] = line[5:].strip()
-        elif line.startswith('Version:'):
+        elif line.startswith('Version:') and 'version' not in content:
             content['version'] = line[8:].strip()
-        elif line.startswith('Release:'):
+        elif line.startswith('Release:') and 'release' not in content:
             content['release'] = line[8:].strip()
     return content
 
