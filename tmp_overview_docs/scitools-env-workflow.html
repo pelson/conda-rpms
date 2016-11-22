@@ -34,7 +34,7 @@
 The speed, depth and quality of open source scientific software development has grown consistently for many years.
 
 Additionally, the modular nature of languages like Python has resulted in a large number of dependencies needing to be packaged - 
-it has reached the point where no one team or individual can possibly remain abreast of the frequent changes that take place in the scientific software stack.
+it has reached the point where no one individual or small team can possibly remain abreast of the frequent changes that take place in the scientific software stack.
 
 This combination of pace rapidly makes centrally deployed scientific software stacks date quickly and often results in scientific
 lab software environments being out of date and missing new features and bug fixes.
@@ -42,8 +42,8 @@ lab software environments being out of date and missing new features and bug fix
 </p>
 
 <p>
-The challenge is heightened by the dichotomy of stability and modernity for users, such that logically we arrive at the prospect
-wanting to deploy multiple software environments to the same systems.
+    The challenge is heightened by the dichotomy between user stability and modernity. 
+    Logically we arrive at the prospect of software self-service, or a need to deploy multiple centrally managed software environments *to the same systems*.
 </p>
 
 <h2>The solution</h2>
@@ -59,11 +59,11 @@ To separate concerns and to simplify development the deployment was broken into 
 <ul>
  <li>First, we build up a body of conda "distributions" into a conda channel - these are simply compiled packages that conda knows how to install</li>
  <li>Next, we define our environments and resolve them for their dependencies</li>
- <li>Finally we deploy them to a number of different targets</li>
+ <li>Finally we deploy the fully resolved environments to a number of different targets</li>
 </ul>
 </p>
 <p>
-Unlike conda itself we have separated the resolve and deploy stages allowing us to resolve the environment once, and then subsequently deploy to a number of different targets such as RPM, tarball or directly to disk.
+Unlike conda itself, we have separated the "resolve" and "deploy" stages, allowing us to resolve the environment once and then subsequently deploy to a number of different targets such as RPM, tarball or directly to disk.
 </p>
 
 
@@ -83,19 +83,20 @@ The metadata is stored as a YAML document and is therefore ideal for putting und
 
 <p>
 In order to facilitate the sharing and canonicalisation of recipes in a single location, conda-forge has been developed.
-It takes a community oriented maintenance model to enable package developers and software packagers to come together in a single place to collaborate publicly.
-Because of this, the majority of recipes for a lab's software stack can be drawn from this public resource into a private repository of recipes.
+It takes a community oriented maintenance model to enable package developers and software packagers to come together in a single place to collaborate publicly. Because of this, the majority of recipes for a lab's software stack can be drawn from this public resource into a private repository of recipes.
+At the time of writing, there are over 300 maintainers of over 1400 "recipes" on conda-forge (Sept 2016).
+
 </p>
 
 <p>
-As part of developing conda-forge and its predecessor conda-recipes-scitools, conda-build-all was produced to orchestrate the building of a collection of recipes against a matrix of targeted dependency versions (e.g. python 2.7 and 3.5).
+As part of developing conda-forge and its predecessor "conda-recipes-scitools", conda-build-all was produced to orchestrate the building of a collection of recipes against a matrix of targeted dependency versions (e.g. python 2.7 and 3.5).
 This same tool can be used for building a private repository of recipes.
 </p>
 
 
 <p>
 With the build of all recipes complete, we can now move the distributions (the things that were actually built) into a conda channel.
-At this point individuals could use vanilla conda to manage personal environments.
+At this point individuals could use vanilla conda to manage personal environments by pointing at the created channel(s).
 Combined with site-wide conda configuration it should be stressed how valuable this option is for development purposes as well as for enabling early testing of recently built distributions.
 </p>
 
@@ -126,7 +127,7 @@ We are able to represent a "release" of a software environment by using git tags
 
 <p>
 With the environment definition in the form of a git repo in place, we now wish to deploy it.
-Decoupling of the resolve and deploy steps means that we are able to deploy the same environment in a multitude of different ways.
+Decoupling of the resolve and deploy steps means that we are able to deploy the same environment in a multitude of ways.
 </p>
 
 <svg id="svg-rpm" width=960 height=600></svg>
